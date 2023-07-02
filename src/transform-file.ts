@@ -1,6 +1,6 @@
 import Ts from "typescript";
 import * as Path from "path";
-import { Project } from "@ts-morph/bootstrap";
+import { Project, createProjectSync } from "@ts-morph/bootstrap";
 
 /**
  * @alpha
@@ -71,18 +71,20 @@ export const transformFile = (
   file: File,
   options: TransformFileOptions
 ): string => {
-  const project = options.project || new Project({
-    useInMemoryFileSystem: true,
-    compilerOptions: getCompilerOptions(options.compilerOptions)
-  });
+  const project =
+    options.project ||
+    createProjectSync({
+      useInMemoryFileSystem: true,
+      compilerOptions: getCompilerOptions(options.compilerOptions),
+    });
 
   project.createSourceFile(file.path, file.contents);
 
-  (options.sources || []).forEach(source =>
+  (options.sources || []).forEach((source) =>
     project.createSourceFile(source.path, source.contents)
   );
 
-  (options.mocks || []).forEach(mock => {
+  (options.mocks || []).forEach((mock) => {
     const base = `/node_modules/${mock.name}`;
     project.createSourceFile(`${base}/index.ts`, mock.content);
     project.fileSystem.writeFileSync(
@@ -99,7 +101,7 @@ export const transformFile = (
     undefined,
     false,
     {
-      before: options.transforms.map(t => t(program))
+      before: options.transforms.map((t) => t(program)),
     }
   );
 
@@ -126,7 +128,9 @@ export const transformFile = (
   return String(project.fileSystem.readFileSync(fileArtifactPath));
 };
 
-export function getCompilerOptions(options?: Partial<Ts.CompilerOptions>): Ts.CompilerOptions {
+export function getCompilerOptions(
+  options?: Partial<Ts.CompilerOptions>
+): Ts.CompilerOptions {
   return {
     outDir: "/dist",
     lib: ["/node_modules/typescript/lib/lib.esnext.full.d.ts"],
@@ -139,8 +143,8 @@ export function getCompilerOptions(options?: Partial<Ts.CompilerOptions>): Ts.Co
     types: [],
     noEmitOnError: true,
     jsx: Ts.JsxEmit.Preserve,
-    ...(options || {})
-  }
+    ...(options || {}),
+  };
 }
 
 function getFileArtifactPath(

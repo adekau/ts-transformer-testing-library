@@ -1,6 +1,11 @@
 import Ts from "typescript";
-import { ModuleDescriptor, File, transformFile, getCompilerOptions } from "./transform-file";
-import { Project } from "@ts-morph/bootstrap";
+import {
+  ModuleDescriptor,
+  File,
+  transformFile,
+  getCompilerOptions,
+} from "./transform-file";
+import { Project, createProjectSync } from "@ts-morph/bootstrap";
 
 export type TransformerFn = (
   program: Ts.Program
@@ -60,9 +65,9 @@ export class Transformer {
     clone.compilerOptions = options;
 
     if (clone.project) {
-      clone.project = new Project({
+      clone.project = createProjectSync({
         useInMemoryFileSystem: true,
-        compilerOptions: getCompilerOptions(clone.compilerOptions)
+        compilerOptions: getCompilerOptions(clone.compilerOptions),
       });
     }
 
@@ -84,21 +89,25 @@ export class Transformer {
   }
 
   public transform(input?: string): string {
-    this.project = this.project || new Project({
-      useInMemoryFileSystem: true,
-      compilerOptions: getCompilerOptions(this.compilerOptions)
-    });
+    this.project =
+      this.project ||
+      createProjectSync({
+        useInMemoryFileSystem: true,
+        compilerOptions: getCompilerOptions(this.compilerOptions),
+      });
 
-    const filePath = typeof this.filePath === "string"
-      ? this.filePath
-      : "/index.ts";
+    const filePath =
+      typeof this.filePath === "string" ? this.filePath : "/index.ts";
 
-    const file = typeof input === "string"
-      ? { path: filePath, contents: input }
-      : this.file;
+    const file =
+      typeof input === "string"
+        ? { path: filePath, contents: input }
+        : this.file;
 
     if (!file) {
-      throw new Error(`transform must be called on Transformer with file or with string input`);
+      throw new Error(
+        `transform must be called on Transformer with file or with string input`
+      );
     }
 
     return transformFile(file, {
@@ -106,7 +115,7 @@ export class Transformer {
       compilerOptions: this.compilerOptions,
       mocks: this.mocks,
       sources: this.sources,
-      transforms: this.transformers
+      transforms: this.transformers,
     });
   }
 }
